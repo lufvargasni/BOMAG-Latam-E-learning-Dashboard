@@ -203,6 +203,7 @@
   .trend-bar-outer { flex: 1; width: 100%; display: flex; align-items: flex-end; }
   .trend-bar-inner { width: 100%; border-radius: 3px 3px 0 0; transition: height 0.5s; }
   .trend-month { font-size: 9px; color: var(--text-muted); margin-top: 3px; }
+  .trend-pct { font-size: 8px; font-weight: 700; color: var(--text-muted); margin-bottom: 2px; }
 
   /* RANKING TABLE */
   .ranking-container { display: none; }
@@ -637,6 +638,7 @@ function renderTrend(companies) {
           const color = v !== null ? getColor(v) : '#eef0f3';
           const label = dispDates[i].slice(5);
           return `<div class="trend-bar-col">
+            <div class="trend-pct">${v !== null ? Math.round(v * 100) + '%' : ''}</div>
             <div class="trend-bar-outer" style="height:72px">
               <div class="trend-bar-inner" style="height:${h}px;background:${color};${v===null?'opacity:0.2':''}"></div>
             </div>
