@@ -201,7 +201,8 @@
   .trend-chart { display: flex; align-items: flex-end; gap: 3px; height: 80px; }
   .trend-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
   .trend-bar-outer { flex: 1; width: 100%; display: flex; align-items: flex-end; }
-  .trend-bar-inner { width: 100%; border-radius: 3px 3px 0 0; transition: height 0.5s; }
+  .trend-bar-inner { width: 100%; border-radius: 3px 3px 0 0; transition: height 0.5s; display: flex; align-items: flex-start; justify-content: center; }
+  .trend-bar-users { font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.9); margin-top: 3px; line-height: 1; }
   .trend-month { font-size: 9px; color: var(--text-muted); margin-top: 3px; }
   .trend-pct { font-size: 8px; font-weight: 700; color: var(--text-muted); margin-bottom: 2px; }
 
@@ -625,22 +626,23 @@ function renderTrend(companies) {
   grid.innerHTML = companyNames.map(name => {
     const bars = dispDates.map(dt => {
       const rows = filtered.filter(r => r.company === name && r.date === dt);
-      return rows.length ? rows.reduce((s, r) => s + r.quota, 0) / rows.length : null;
+      return rows.length ? { avg: rows.reduce((s, r) => s + r.quota, 0) / rows.length, count: rows.length } : null;
     });
-
-    const maxVal = Math.max(...bars.filter(b => b !== null), 0.01);
 
     return `<div class="trend-card">
       <div class="trend-title">${name}</div>
       <div class="trend-chart">
-        ${bars.map((v, i) => {
-          const h = v !== null ? Math.max(4, Math.round((v / 1) * 72)) : 4;
+        ${bars.map((b, i) => {
+          const v = b !== null ? b.avg : null;
+          const h = v !== null ? Math.max(14, Math.round(v * 72)) : 4;
           const color = v !== null ? getColor(v) : '#eef0f3';
           const label = dispDates[i].slice(5);
           return `<div class="trend-bar-col">
             <div class="trend-pct">${v !== null ? Math.round(v * 100) + '%' : ''}</div>
             <div class="trend-bar-outer" style="height:72px">
-              <div class="trend-bar-inner" style="height:${h}px;background:${color};${v===null?'opacity:0.2':''}"></div>
+              <div class="trend-bar-inner" style="height:${h}px;background:${color};${v===null?'opacity:0.2':''}">
+                ${b !== null ? `<span class="trend-bar-users">${b.count}</span>` : ''}
+              </div>
             </div>
             <div class="trend-month">${label}</div>
           </div>`;
@@ -924,7 +926,6 @@ function renderMonthly(companies) {
           <div class="monthly-card-sub" style="text-align:right">último mes</div>
         </div>
       </div>
-      <div class="line-chart-wrap">${buildLineChart(dates, series)}</div>
       <div class="monthly-table-wrap">${buildMonthlyTable(c.name, dates)}</div>
     </div>`;
   }).join('');
