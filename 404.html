@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOMAG | Página no encontrada</title>
+<style>
+  :root {
+    --bomag-yellow: #FFDC43;
+    --bomag-dark:   #1C1C1B;
+    --bomag-gray:   #4B4B4B;
+    --bg:           #F4F4F4;
+    --card-bg:      #ffffff;
+    --border:       #E1E1E1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--bomag-dark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-left: 6px solid var(--bomag-yellow);
+    border-radius: 8px;
+    max-width: 520px;
+    width: 100%;
+    padding: 40px 32px;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  }
+  .code {
+    font-size: 64px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--bomag-dark);
+    margin-bottom: 8px;
+  }
+  .code span { color: var(--bomag-yellow); }
+  h1 {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+  p {
+    color: var(--bomag-gray);
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  a.btn {
+    display: inline-block;
+    background: var(--bomag-dark);
+    color: var(--bomag-yellow);
+    text-decoration: none;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 6px;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  a.btn:hover { transform: translateY(-1px); background: #000; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="code">4<span>0</span>4</div>
+    <h1>Página no encontrada</h1>
+    <p>La página que buscas no existe o fue movida. Vuelve al tablero para continuar.</p>
+    <a class="btn" href="./">Ir al tablero</a>
+  </div>
+</body>
+</html>
