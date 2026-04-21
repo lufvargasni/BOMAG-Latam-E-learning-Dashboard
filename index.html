@@ -775,6 +775,13 @@ function getCompanyMonthlySeries(companyName, dates) {
   });
 }
 
+// Format date "YYYY-MM" → "Mon-YYYY" (e.g. "2025-05" → "May-2025")
+function fmtDate(d) {
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const [year, month] = d.split('-');
+  return `${months[parseInt(month, 10) - 1]}-${year}`;
+}
+
 // Build SVG line chart. values: [0..1] or null. Returns SVG string.
 function buildLineChart(dates, values, opts = {}) {
   const W = opts.width || 640;
@@ -821,10 +828,10 @@ function buildLineChart(dates, values, opts = {}) {
     </circle>`
   ).join('');
 
-  // X labels (show every month, compact yy-mm)
+  // X labels (show every month, Mon-YYYY format)
   const xLabels = dates.map((d, i) => {
     const x = padL + i * stepX;
-    const lbl = d.slice(2); // "24-09" style
+    const lbl = fmtDate(d); // "May-2025" style
     return `<text x="${x}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#666" transform="rotate(-35 ${x} ${H - 6})">${lbl}</text>`;
   }).join('');
 
@@ -849,7 +856,7 @@ function buildMonthlyTable(companyName, dates) {
 
   const header = `<thead><tr>
     <th class="mt-user">Usuario</th>
-    ${dates.map(d => `<th>${d.slice(2)}</th>`).join('')}
+    ${dates.map(d => `<th>${fmtDate(d)}</th>`).join('')}
     <th>Prom.</th>
   </tr></thead>`;
 
