@@ -260,12 +260,75 @@
   .modal-stat-val { font-size: 22px; font-weight: 900; }
   .modal-stat-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
+  /* MONTHLY (Mes a mes) VIEW */
+  .monthly-container { display: none; }
+  .monthly-card {
+    background: var(--card-bg); border-radius: 10px;
+    border: 1px solid var(--border); padding: 16px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 18px;
+  }
+  .monthly-card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .monthly-card-title { font-size: 15px; font-weight: 800; color: var(--text); }
+  .monthly-card-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .monthly-card-pct { font-size: 22px; font-weight: 900; }
+  .line-chart-wrap {
+    background: #fafafa; border-radius: 8px; padding: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .line-chart-wrap svg { width: 100%; height: 140px; display: block; }
+  .monthly-table-wrap {
+    overflow-x: auto; max-height: 360px; overflow-y: auto;
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .monthly-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    font-size: 11px; background: #fff;
+  }
+  .monthly-table th, .monthly-table td {
+    padding: 6px 8px; text-align: center; white-space: nowrap;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .monthly-table thead th {
+    background: var(--bomag-dark); color: #fff; font-weight: 700;
+    position: sticky; top: 0; z-index: 2;
+    font-size: 10px; letter-spacing: 0.3px;
+  }
+  .monthly-table th.mt-user, .monthly-table td.mt-user {
+    text-align: left; font-weight: 700; position: sticky; left: 0;
+    background: #fff; z-index: 1; min-width: 200px; max-width: 240px;
+    overflow: hidden; text-overflow: ellipsis;
+    border-right: 2px solid var(--border);
+  }
+  .monthly-table thead th.mt-user { background: var(--bomag-dark); z-index: 3; }
+  .monthly-table tr.mt-row-dist td { background: #FFF8DC; font-weight: 800; }
+  .monthly-table tr.mt-row-dist td.mt-user { background: var(--bomag-yellow); color: var(--bomag-dark); }
+  .monthly-table tr:hover td:not(.mt-user) { filter: brightness(0.96); }
+  .mt-cell {
+    color: #fff; font-weight: 700; border-radius: 4px;
+    padding: 3px 6px; display: inline-block; min-width: 38px;
+  }
+  .mt-cell.empty { background: #f0f0f0; color: #bbb; font-weight: 400; }
+
+  /* MODAL sections */
+  .modal-section-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    color: var(--text-muted); letter-spacing: 0.5px;
+    margin: 18px 0 8px;
+  }
+  .modal-body .line-chart-wrap { margin-bottom: 12px; }
+
   @media (max-width: 640px) {
     .kpi-row { grid-template-columns: repeat(2, 1fr); }
     .company-grid { grid-template-columns: 1fr; }
     .filters-bar { padding: 12px 16px; }
     .main { padding: 16px; }
     .modal-stats { grid-template-columns: 1fr; }
+    .monthly-table th.mt-user, .monthly-table td.mt-user { min-width: 140px; }
   }
 </style>
 </head>
@@ -340,6 +403,7 @@
       <button class="view-btn active" onclick="setView('cards')" id="vbtn-cards">📦 Tarjetas</button>
       <button class="view-btn" onclick="setView('ranking')" id="vbtn-ranking">🏆 Ranking</button>
       <button class="view-btn" onclick="setView('trend')" id="vbtn-trend">📈 Tendencia</button>
+      <button class="view-btn" onclick="setView('monthly')" id="vbtn-monthly">📅 Mes a mes</button>
     </div>
   </div>
 
@@ -370,6 +434,11 @@
   <div id="view-trend" class="trend-container">
     <div class="trend-grid" id="trend-grid"></div>
   </div>
+
+  <!-- MONTHLY VIEW -->
+  <div id="view-monthly" class="monthly-container">
+    <div id="monthly-grid"></div>
+  </div>
 </div>
 
 <!-- TEAM MODAL -->
@@ -394,6 +463,13 @@
           <div class="modal-stat-lbl">Mejor desempeño</div>
         </div>
       </div>
+      <div class="modal-section-title">Evolución mensual del distribuidor</div>
+      <div id="modal-dist-chart" class="line-chart-wrap"></div>
+
+      <div class="modal-section-title">Progreso mes a mes por usuario</div>
+      <div id="modal-monthly-table" class="monthly-table-wrap"></div>
+
+      <div class="modal-section-title">Equipo (período actual)</div>
       <div id="modal-team-list"></div>
     </div>
   </div>
@@ -606,6 +682,13 @@ function openModal(encodedName) {
   }).join('');
 
   document.getElementById('modal-team-list').innerHTML = listHtml;
+
+  // --- Monthly evolution (distributor + per-user) ---
+  const dates = getMonthsForTab();
+  const distSeries = getCompanyMonthlySeries(name, dates);
+  document.getElementById('modal-dist-chart').innerHTML = buildLineChart(dates, distSeries);
+  document.getElementById('modal-monthly-table').innerHTML = buildMonthlyTable(name, dates);
+
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -617,12 +700,13 @@ function closeModal(e) {
 
 function setView(v) {
   currentView = v;
-  ['cards','ranking','trend'].forEach(id => {
+  ['cards','ranking','trend','monthly'].forEach(id => {
     document.getElementById('vbtn-' + id).classList.toggle('active', id === v);
   });
   document.getElementById('view-cards').style.display = v === 'cards' ? '' : 'none';
   document.getElementById('view-ranking').style.display = v === 'ranking' ? 'block' : 'none';
   document.getElementById('view-trend').style.display = v === 'trend' ? 'block' : 'none';
+  document.getElementById('view-monthly').style.display = v === 'monthly' ? 'block' : 'none';
   applyFilters();
 }
 
@@ -650,6 +734,191 @@ function applyFilters() {
   if (currentView === 'cards') renderCards(companies);
   else if (currentView === 'ranking') renderRanking(companies);
   else if (currentView === 'trend') renderTrend(companies);
+  else if (currentView === 'monthly') renderMonthly(companies);
+}
+
+/* =========================================================
+   MONTHLY (Mes a mes) HELPERS
+   ========================================================= */
+
+// Get all months for current tab (optionally filtered by country)
+function getMonthsForTab() {
+  const tab = currentTab;
+  const country = document.getElementById('f-country').value;
+  let d = RAW.filter(r => r.tab === tab);
+  if (country) d = d.filter(r => r.country === country);
+  return [...new Set(d.map(r => r.date))].sort();
+}
+
+// Build lookup: company -> user -> date -> quota
+function buildMonthlyLookup(companyName) {
+  const tab = currentTab;
+  const rows = RAW.filter(r => r.tab === tab && r.company === companyName);
+  const byUser = {};   // user -> { date: quota }
+  const allDates = new Set();
+  rows.forEach(r => {
+    if (!byUser[r.name]) byUser[r.name] = {};
+    byUser[r.name][r.date] = r.quota;
+    allDates.add(r.date);
+  });
+  return { byUser, dates: [...allDates].sort() };
+}
+
+// Company monthly average series across dates
+function getCompanyMonthlySeries(companyName, dates) {
+  const tab = currentTab;
+  const rows = RAW.filter(r => r.tab === tab && r.company === companyName);
+  return dates.map(dt => {
+    const sub = rows.filter(r => r.date === dt);
+    if (!sub.length) return null;
+    return sub.reduce((s, r) => s + r.quota, 0) / sub.length;
+  });
+}
+
+// Build SVG line chart. values: [0..1] or null. Returns SVG string.
+function buildLineChart(dates, values, opts = {}) {
+  const W = opts.width || 640;
+  const H = opts.height || 140;
+  const padL = 34, padR = 10, padT = 14, padB = 26;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const n = dates.length;
+  const stepX = n > 1 ? plotW / (n - 1) : 0;
+
+  // Y axis gridlines at 0, 25, 50, 75, 100 %
+  let grid = '';
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (plotH * i / 4);
+    const pct = 100 - i * 25;
+    grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#eef0f3" stroke-width="1"/>`;
+    grid += `<text x="${padL - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#888">${pct}%</text>`;
+  }
+
+  // Build path, skipping nulls
+  let path = '';
+  let started = false;
+  const points = [];
+  values.forEach((v, i) => {
+    if (v === null || v === undefined) { started = false; return; }
+    const x = padL + i * stepX;
+    const y = padT + plotH * (1 - v);
+    points.push({ x, y, v, i });
+    path += (started ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    started = true;
+  });
+
+  // Area under line (light fill)
+  let area = '';
+  if (points.length > 1) {
+    const first = points[0], last = points[points.length - 1];
+    area = `<path d="M${first.x},${padT + plotH} ${points.map(p => 'L' + p.x + ',' + p.y).join(' ')} L${last.x},${padT + plotH} Z" fill="url(#lg)" opacity="0.25"/>`;
+  }
+
+  // Dots with color by value
+  const dots = points.map(p =>
+    `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${getColor(p.v)}" stroke="#fff" stroke-width="1.5">
+      <title>${dates[p.i]}: ${Math.round(p.v * 100)}%</title>
+    </circle>`
+  ).join('');
+
+  // X labels (show every month, compact yy-mm)
+  const xLabels = dates.map((d, i) => {
+    const x = padL + i * stepX;
+    const lbl = d.slice(2); // "24-09" style
+    return `<text x="${x}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#666" transform="rotate(-35 ${x} ${H - 6})">${lbl}</text>`;
+  }).join('');
+
+  const defs = `<defs><linearGradient id="lg" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="#1e8449"/>
+    <stop offset="100%" stop-color="#c0392b"/>
+  </linearGradient></defs>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${defs}
+    ${grid}
+    ${area}
+    <path d="${path}" stroke="#1C1C1B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+    ${xLabels}
+  </svg>`;
+}
+
+// Build monthly heatmap table: first row = distributor avg, then user rows
+function buildMonthlyTable(companyName, dates) {
+  const lookup = buildMonthlyLookup(companyName);
+  const distSeries = getCompanyMonthlySeries(companyName, dates);
+
+  const header = `<thead><tr>
+    <th class="mt-user">Usuario</th>
+    ${dates.map(d => `<th>${d.slice(2)}</th>`).join('')}
+    <th>Prom.</th>
+  </tr></thead>`;
+
+  // Distributor row
+  const distAvg = (() => {
+    const vals = distSeries.filter(v => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  })();
+  const distRow = `<tr class="mt-row-dist">
+    <td class="mt-user">🏢 ${companyName} (promedio)</td>
+    ${distSeries.map(v => v === null
+      ? `<td><span class="mt-cell empty">—</span></td>`
+      : `<td><span class="mt-cell" style="background:${getColor(v)}">${Math.round(v * 100)}%</span></td>`
+    ).join('')}
+    <td><span class="mt-cell" style="background:${getColor(distAvg)}">${Math.round(distAvg * 100)}%</span></td>
+  </tr>`;
+
+  // Sort users by their overall avg descending
+  const users = Object.keys(lookup.byUser).map(u => {
+    const vals = dates.map(d => lookup.byUser[u][d] !== undefined ? lookup.byUser[u][d] : null);
+    const nonNull = vals.filter(v => v !== null);
+    const avg = nonNull.length ? nonNull.reduce((a, b) => a + b, 0) / nonNull.length : 0;
+    return { name: u, vals, avg };
+  }).sort((a, b) => b.avg - a.avg);
+
+  const userRows = users.map(u => `<tr>
+    <td class="mt-user" title="${u.name}">${u.name}</td>
+    ${u.vals.map(v => v === null
+      ? `<td><span class="mt-cell empty">—</span></td>`
+      : `<td><span class="mt-cell" style="background:${getColor(v)}">${Math.round(v * 100)}%</span></td>`
+    ).join('')}
+    <td><span class="mt-cell" style="background:${getColor(u.avg)}">${Math.round(u.avg * 100)}%</span></td>
+  </tr>`).join('');
+
+  return `<table class="monthly-table">${header}<tbody>${distRow}${userRows}</tbody></table>`;
+}
+
+// Main monthly view renderer — one card per distributor
+function renderMonthly(companies) {
+  const grid = document.getElementById('monthly-grid');
+  if (!companies.length) {
+    grid.innerHTML = '<div class="empty-state"><p>No hay datos para los filtros seleccionados.</p></div>';
+    return;
+  }
+  const dates = getMonthsForTab();
+
+  grid.innerHTML = companies.map(c => {
+    const series = getCompanyMonthlySeries(c.name, dates);
+    const nonNull = series.filter(v => v !== null);
+    const avg = nonNull.length ? nonNull.reduce((a, b) => a + b, 0) / nonNull.length : 0;
+    const last = [...series].reverse().find(v => v !== null);
+    const lastPct = last !== undefined ? Math.round(last * 100) : 0;
+    const lastColor = last !== undefined ? getColor(last) : '#999';
+
+    return `<div class="monthly-card">
+      <div class="monthly-card-header">
+        <div>
+          <div class="monthly-card-title">${c.name}</div>
+          <div class="monthly-card-sub">🌎 ${c.country} · ${c.area} · 👥 ${c.members.length} miembros (período actual)</div>
+        </div>
+        <div>
+          <div class="monthly-card-pct" style="color:${lastColor}">${lastPct}%</div>
+          <div class="monthly-card-sub" style="text-align:right">último mes</div>
+        </div>
+      </div>
+      <div class="line-chart-wrap">${buildLineChart(dates, series)}</div>
+      <div class="monthly-table-wrap">${buildMonthlyTable(c.name, dates)}</div>
+    </div>`;
+  }).join('');
 }
 
 // Init
