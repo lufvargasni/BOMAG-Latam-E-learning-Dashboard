@@ -281,7 +281,7 @@
     border: 1px solid var(--border);
     margin-bottom: 12px;
   }
-  .line-chart-wrap svg { width: 100%; height: 140px; display: block; }
+  .line-chart-wrap svg { width: 100%; height: auto; display: block; }
   .monthly-table-wrap {
     overflow-x: auto; max-height: 360px; overflow-y: auto;
     border: 1px solid var(--border); border-radius: 8px;
@@ -786,9 +786,9 @@ function fmtDate(d) {
 
 // Build SVG line chart. values: [0..1] or null. Returns SVG string.
 function buildLineChart(dates, values, opts = {}) {
-  const W = opts.width || 640;
-  const H = opts.height || 140;
-  const padL = 34, padR = 10, padT = 14, padB = 26;
+  const W = opts.width || 900;
+  const H = opts.height || 200;
+  const padL = 42, padR = 16, padT = 18, padB = 52;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
   const n = dates.length;
@@ -800,7 +800,7 @@ function buildLineChart(dates, values, opts = {}) {
     const y = padT + (plotH * i / 4);
     const pct = 100 - i * 25;
     grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#eef0f3" stroke-width="1"/>`;
-    grid += `<text x="${padL - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#888">${pct}%</text>`;
+    grid += `<text x="${padL - 8}" y="${y + 4}" text-anchor="end" font-size="12" fill="#888">${pct}%</text>`;
   }
 
   // Build path, skipping nulls
@@ -825,7 +825,7 @@ function buildLineChart(dates, values, opts = {}) {
 
   // Dots with color by value
   const dots = points.map(p =>
-    `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${getColor(p.v)}" stroke="#fff" stroke-width="1.5">
+    `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="${getColor(p.v)}" stroke="#fff" stroke-width="2">
       <title>${dates[p.i]}: ${Math.round(p.v * 100)}%</title>
     </circle>`
   ).join('');
@@ -833,8 +833,8 @@ function buildLineChart(dates, values, opts = {}) {
   // X labels (show every month, Mon-YYYY format)
   const xLabels = dates.map((d, i) => {
     const x = padL + i * stepX;
-    const lbl = fmtDate(d); // "May-2025" style
-    return `<text x="${x}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#666" transform="rotate(-35 ${x} ${H - 6})">${lbl}</text>`;
+    const lbl = fmtDate(d);
+    return `<text x="${x}" y="${H - 8}" text-anchor="end" font-size="11" fill="#555" transform="rotate(-40 ${x} ${H - 8})">${lbl}</text>`;
   }).join('');
 
   const defs = `<defs><linearGradient id="lg" x1="0" x2="0" y1="0" y2="1">
@@ -842,10 +842,10 @@ function buildLineChart(dates, values, opts = {}) {
     <stop offset="100%" stop-color="#c0392b"/>
   </linearGradient></defs>`;
 
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${defs}
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${defs}
     ${grid}
     ${area}
-    <path d="${path}" stroke="#1C1C1B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${path}" stroke="#1C1C1B" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     ${dots}
     ${xLabels}
   </svg>`;
