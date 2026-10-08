@@ -739,7 +739,7 @@ function populateFilters() {
   const fd = document.getElementById('f-date');
   const curDate = fd.value;
   fd.innerHTML = '<option value="">Último disponible</option>' +
-    dates.map(d => `<option value="${d}" ${d===curDate?'selected':''}>${monthLabelFull(d)}</option>`).join('');
+    [...dates].reverse().map(d => `<option value="${d}" ${d===curDate?'selected':''}>${monthLabelFull(d)}</option>`).join('');
 
   const fc = document.getElementById('f-country');
   const curCountry = fc.value;
